@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<style type="text/css">
+*{margin: 0;padding:0;}
+#map{width: 300px; height: 300px; background: #129c12; margin: 20px auto; position: relative; overflow: hidden;}
+#bird{width: 20px; height: 20px; background: blue; position: absolute; top: 190px; left:80px; }
+.pipeup{width: 20px; background: red; position: absolute; top: 0;}
+.pipedown{width: 20px; background: red; position: absolute;}
+
+#score{text-align: center;}
+#score span{color: red;}
+</style>
+<script type="text/javascript">
+window.onload=function()
+{
+	var bird=document.getElementById('bird');
+	var map=document.getElementById('map');	
+	var pipeArr=[];
+	var pipeNum=6;                //偶数
+	var mapWidth=300;
+	var mapHeight=300;
+	var throughHeight=60;
+	var pipeDistance=120;
+	var iScore=0;
+	var oDiv=document.getElementById('score');
+	var oScore=oDiv.getElementsByTagName('span')[0];
+
+	birdDown(bird);
+	createPipe(pipeNum);
+	movePipe();
+
+	for (var i = 0; i < pipeArr.length; i++) 
+	{
+		setPipePosition(pipeArr[i])
+	};
+
+	document.onkeydown=function(ev)
+	{
+		var oEvent=ev||event;
+		if(oEvent.keyCode != 32)
+		{
+			return;
+		}
+		else
+		{
+			iSpeed=-6; 				//速度反向会忘上面移动21px；
+			i=0;
+		}
+	}
+
+	function createPipe(num)
+	{
+		for (var i = 0; i < num; i++) 
+		{
+			var pipe=document.createElement('div');
+			map.appendChild(pipe);
+			var iHeight=parseInt(Math.random()*(mapHeight-throughHeight-40*2))+40;
+			var iLeft=(300+i*60);				//管子间距120px；上下（*2）管子高度至少40，
+			var iTop=0;
+			pipe.className="pipeup";
+
+			if(num == 2)
+			{
+				iLeft=pipeArr[pipeArr.length-1].l+pipeDistance;
+			}
+
+			if(i%2 == 1)						//基数和偶数管子处于一列；
+			{
+				iLeft=pipeArr[pipeArr.length-1].l;
+				iTop=throughHeight+pipeArr[pipeArr.length-1].h;
+				iHeight=mapHeight-iTop;
+				pipe.className="pipedown";
+			}
+			pipePlus={l: iLeft, t:iTop, h:iHeight, div:pipe};
+			pipeArr.push(pipePlus);
+		}
+	}
+
+	function movePipe()				//移动管子
+	{
+		clearInterval(pipeTimer);
+		pipeTimer=setInterval(function()
+		{
+			iScore++;
+			if(iScore== 240)
+			{
+				oScore.innerHTML=parseInt(oScore.innerHTML)+1;
+				//alert(iScore)
+			}
+			else if(iScore > 240 && (iScore-240)%120 == 0 )
+			{
+				oScore.innerHTML=parseInt(oScore.innerHTML)+1;
+			}
+			
+			for (var i = 0; i < pipeArr.length; i++) 
+			{
+				pipeArr[i].l--;
+				setPipePosition(pipeArr[i]);
+			};
+
+			for (var i = 0; i < pipeArr.length; i++) 				//检测死亡
+			{
+				if(Math.abs(pipeArr[i].l-bird.offsetLeft) < 20)
+				{
+					if((i%2 ==0) && (bird.offsetTop <= pipeArr[i].h))//检测上面管子
+					{
+						clearInterval(timer);
+						clearInterval(pipeTimer);
+						alert("Game Over!")					
+					}
+					else if((i%2 ==1) && (bird.offsetTop+20 >= pipeArr[i].t))//检测下面管子
+					{
+						clearInterval(timer);
+						clearInterval(pipeTimer);
+						alert("Game Over!")				
+					}					
+				}
+			};
+
+			if(pipeArr[pipeArr.length-1].l <= mapWidth-pipeDistance )//持续的创造管子,最后一根间距大于120
+			{
+				createPipe(2);
+				map.removeChild(pipeArr[0].div);  //清除数组前两项
+				map.removeChild(pipeArr[1].div);
+				pipeArr.splice(0,2);
+			};
+		},10);
+	};
+}
+var timer=null;
+var iSpeed=2;
+var pipeTimer=null;
+
+function setPipePosition(obj)
+{
+	obj.div.style.left=parseInt(obj.l)+"px";
+	obj.div.style.top=parseInt(obj.t)+"px";
+	obj.div.style.height=parseInt(obj.h)+"px";	
+}
+
+function birdDown(obj)
+{
+	clearInterval(timer);
+	timer=setInterval(function(){
+		if(obj.offsetTop<= 0)
+		{
+			obj.style.top=0+"px";
+			clearInterval(timer);
+			clearInterval(pipeTimer);
+		}
+		if(280-obj.offsetTop <= iSpeed)
+		{
+			obj.style.top=280+"px";
+			clearInterval(timer);
+			clearInterval(pipeTimer);
+		}
+		else
+		{
+			obj.style.top=obj.offsetTop+(iSpeed++)+"px";			
+		}
+	}, 50);
+}
+</script>
+</head>
+<body>
+	<div id="map">
+		<div id="bird"></div>
+	</div>
+	<div id="score">得分：<span>0</span></div>
+</body>  
+</html>
